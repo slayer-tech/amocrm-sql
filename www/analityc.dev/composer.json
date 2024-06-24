@@ -1,0 +1,6 @@
+{
+    "require": {
+        "amocrm/amocrm-api-library": "^1.8",
+        "khr/php-mcurl-client": "~3.0"
+    }
+}

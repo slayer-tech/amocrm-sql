@@ -1,0 +1,56 @@
+# Версия docker-compose
+version: '3'
+# Список наших сервисов (контейнеров)
+services:
+  nginx:
+    # используем последний стабильный образ nginx
+    image: nginx:latest
+    # маршрутизируем порты
+    ports:
+      - "80:80"
+      - "443:443"
+    # монтируем директории, слева директории на основной машине, справа - куда они монтируются в контейнере
+    volumes:
+      - ./hosts:/etc/nginx/conf.d
+      - ./www:/var/www
+      - ./logs/nginx:/var/log/nginx
+    # nginx должен общаться с php контейнером
+    links:
+      - php
+  php:
+    # у нас свой образ для PHP, указываем путь к нему и говорим что его надо собрать
+    build: ./images/php
+    # этот образ будет общаться с mysql
+    links:
+      - mysql
+    # монтируем директорию с проектами
+    volumes:
+      - ./www:/var/www
+  mysql:
+    image: mysql:8.0.29
+    ports:
+      - "3306:3306"
+    volumes:
+      - /etc/mysql:/etc/mysql/conf.d
+#      - ./logs/mysql:/var/log/mysql
+      - db:/var/lib/mysql
+      - mysql-files:/var/lib/mysql-files
+      - ./data:/docker-entrypoint-initdb.d
+    # задаем пароль для root пользователя
+    # заливку дампа сайта и создание пользователя для доступа к базе снаружи будем делать позже
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234567890
+      MYSQL_DATABASE: events
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: 1234567890
+volumes:
+  db:
+    driver: local
+  mysql-files:
+    driver: local
